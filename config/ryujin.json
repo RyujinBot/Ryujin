@@ -2,11 +2,11 @@
     "settings": 
     [
         {
-            "token": "censored",
-            "stats-channel": 1157763328454688901,
-            "info-channel": 1060153550291873802,
-            "tickets-channel": 1062405134325403688,
-            "welcome-leave-channel": 1060157467042000968
+            "token": "censored", // Bot Token
+            "stats-channel": 1157763328454688901, // From Ryujin Bot Support Server
+            "info-channel": 1060153550291873802, // From Ryujin Bot Support Server
+            "tickets-channel": 1062405134325403688, // From Ryujin Bot Support Server
+            "welcome-leave-channel": 1060157467042000968 // From Ryujin Bot Support Server
         }
     ]
 }
