@@ -1,0 +1,1 @@
+# Information commands package for Ryujin Bot 
