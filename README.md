@@ -30,7 +30,37 @@
 
 ## 🎯 Command Suite
 
-### 📊 Essential Tools
+### 🛡️ Moderation Commands (🆕)
+| Command | Description |
+|---------|-------------|
+| `/nick <nickname>` | Change the bot’s nickname |
+| `/setnick <user> <nickname>` | Change a user's nickname |
+| `/slowmode <seconds> [channel]` | Enable slowmode in a channel |
+| `/remove_slowmode <seconds> [channel]` | Disable slowmode in a channel |
+| `/lock [channel]` / `/unlock [channel]` | Restrict or allow messages in a channel |
+| `/purge <messages>` | Bulk delete messages from a channel |
+| `/timeout <user> <duration> [reason]` / `/remove_timeout <user> [reason]` | Temporarily mute/unmute a user |
+| `/kick <user> [reason]` | Kick a user with DM notification |
+| `/ban <user> [duration] [reason]` / `/unban <user_id> [reason]` | Ban or unban a user with DM notification |
+| `/softban <user> [duration] [reason]` | Softban (ban + unban to remove messages) |
+| `/warn <user> [reason]` / `/warns <user>` / `/remove_warn <user> <warning_id>` | Manage user warnings |
+| `/managesystem` | Configure system channels:<br>
+  - YouTube Downloader<br>
+  - Instagram Downloader<br>
+  - TikTok Downloader<br>
+  - AI Background Removal<br>
+  - Advanced Anime Search<br>
+  - Song Search |
+
+### 👥 Social & Community
+| Command | Description |
+|---------|-------------|
+| `/trending` | Stay updated with latest trends |
+| `/generatetags` | Create optimized hashtags |
+| `/afk [status]` | Set AFK status (auto removed upon sending a message) |
+| `/afk_list` | Show all AFK users in the server |
+
+### ℹ️ Information
 | Command | Description |
 |---------|-------------|
 | `/info` | Discover bot capabilities and insights |
@@ -38,18 +68,24 @@
 | `/resources` | Explore premium editing resources |
 | `/bug` | Submit detailed issue reports |
 | `/donate` | Support and unlock exclusive features |
+| `/avatar [user]` | View/download user avatars |
+| `/server_info` | Get current server details |
+| `/whois [user]` | Get details about a user |
+| `/roleinfo <role>` | Get detailed role info |
+| `/roles` | List all roles in the server |
+| `/emojis` | List all custom emojis |
 
-### 🎨 Creative Arsenal
+### 🎨 Media Tools
 | Command | Description |
 |---------|-------------|
-| `/overlay` | Access premium overlay collection |
+| `/overlay` | Access overlay collection |
 | `/edit_audio <style>` | Find the perfect soundtrack |
 | `/audios_categories` | Explore our audio library |
 | `/random_edit` | Get inspired by curated edits |
 | `/compress_file <file>` | Optimize with quality preservation |
 | `/resize_video <video> <width> <height>` | Custom video dimensions |
 
-### 🎬 After Effects Excellence
+### 🎬 After Effects
 | Command | Description |
 |---------|-------------|
 | `/preset <type>` | Access professional presets |
@@ -61,30 +97,13 @@
 | `/extensions_list` | Browse powerful extensions |
 | `/extension <number>` | Download with setup guides |
 
-### 🌟 Community Features
-| Command | Description |
-|---------|-------------|
-| `/trending` | Stay updated with latest trends |
-| `/generatetags` | Create optimized hashtags |
-
-### 🎵 Audio Mastery
+### 🎵 Media Processing
 | Command | Description |
 |---------|-------------|
 | `/nightcore <song>` | Create custom nightcore versions |
 | `/spedup <song>` | Speed up with quality control |
 | `/slowed <song>` | Slow down with pitch correction |
 | `/convert <from_format> <to_format> <file>` | Seamless format conversion |
-
-### ⚡ System Tools
-| Command | Description |
-|---------|-------------|
-| `/managesystem` | Configure system channels:
-  - YouTube Downloader
-  - Instagram Downloader
-  - TikTok Downloader
-  - AI Background Removal
-  - Advanced Anime Search
-  - Song Search
 
 ## 💫 Support & Growth
 
