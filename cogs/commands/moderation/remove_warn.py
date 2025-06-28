@@ -61,7 +61,6 @@ class RemoveWarnCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Check permissions
         if not interaction.user.guild_permissions.manage_messages:
             await interaction.send(
                 "❌ You don't have permission to remove warnings.",
@@ -69,7 +68,6 @@ class RemoveWarnCog(commands.Cog):
             )
             return
 
-        # Check role hierarchy
         if user.top_role >= interaction.user.top_role:
             await interaction.send(
                 "❌ You can't remove warnings from this user due to role hierarchy.",
@@ -77,7 +75,6 @@ class RemoveWarnCog(commands.Cog):
             )
             return
 
-        # Validate warn number
         if warn_number <= 0:
             await interaction.send(
                 "❌ Warning number must be a positive integer.",
@@ -86,14 +83,12 @@ class RemoveWarnCog(commands.Cog):
             return
 
         try:
-            # Get user's warnings to verify the warning exists
             user_warnings = await get_user_warnings(
                 self.bot.connection,
                 interaction.guild.id,
                 user.id
             )
 
-            # Check if warning exists
             warning_exists = any(warning[0] == warn_number for warning in user_warnings)
             
             if not warning_exists:
@@ -103,10 +98,8 @@ class RemoveWarnCog(commands.Cog):
                 )
                 return
 
-            # Prepare reason
             remove_reason = reason or "No reason provided"
 
-            # Remove the warning
             success = await remove_warning(
                 self.bot.connection,
                 warn_number,
@@ -121,14 +114,12 @@ class RemoveWarnCog(commands.Cog):
                 )
                 return
 
-            # Get updated warning count
             total_warnings = await get_warning_count(
                 self.bot.connection,
                 interaction.guild.id,
                 user.id
             )
 
-            # Create success embed
             embed = nextcord.Embed(
                 title="✅ Warning Removed",
                 description=f"Warning #{warn_number} has been removed from **{user.mention}**.\n\n"

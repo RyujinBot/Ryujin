@@ -46,10 +46,33 @@ class HelpCog(commands.Cog):
             "Information": [
                 ("info", "Shows information about the bot"),
                 ("help", "Shows all Ryujin's commands"),
+                ("ping", "Check bot latency and response time"),
+                ("pong", "Respond with ping"),
+                ("latency", "Get detailed latency information"),
                 ("resources", "Shows all the available editing resources"),
                 ("bug", "Sends the server support link to report a bug"),
                 ("donate", "Support the development of Ryujin"),
-                ("bot_stats", "Display detailed statistics about the bot")
+                ("bot_stats", "Display detailed statistics about the bot"),
+                ("avatar", "View/download user avatars"),
+                ("server_info", "Get current server details"),
+                ("whois", "Get details about an user"),
+                ("roleinfo", "Get detailed role info"),
+                ("roles", "List all roles in the server"),
+                ("emojis", "List all custom emojis")
+            ],
+            "Fun": [
+                ("8ball", "Ask the mystical 8-ball for guidance"),
+                ("coinflip", "Challenge the bot to a coin flip battle"),
+                ("coinflip_battle", "Challenge someone to a coin flip battle"),
+                ("dice", "Roll dice with creative animations and modern UI"),
+                ("dice_battle", "Challenge someone to a dice battle"),
+                ("morse", "Convert text to morse code and vice versa"),
+                ("morse_encode", "Encode text to morse code"),
+                ("morse_decode", "Decode morse code to text"),
+                ("reversetext", "Reverse text in various ways"),
+                ("reversetext_all", "Reverse text in all possible ways"),
+                ("say", "Make the bot say something"),
+                ("say_embed", "Make the bot say something in an embed")
             ],
             "Media Tools": [
                 ("overlay", "Sends a random overlay"),
@@ -73,7 +96,9 @@ class HelpCog(commands.Cog):
             ],
             "Social & Community": [
                 ("trending", "See what's trending in AMV Community"),
-                ("generatetags", "Generate hashtags based on character name and anime")
+                ("generatetags", "Generate hashtags based on character name and anime"),
+                ("afk", "Set AFK status (auto removed upon sending a message)"),
+                ("afk_list", "Show all AFK users in the server")
             ],
             "Media Processing": [
                 ("nightcore <song>", "Converts an uploaded audio file into a Nightcore version"),
@@ -83,8 +108,28 @@ class HelpCog(commands.Cog):
                 ("cut_audio <audio> <start_time> <end_time>", "Cut an audio file to a specific duration")
             ],
             "Moderation": [
-                ("managesystem", "Setup, change, or remove a system channel (YouTube, Instagram, TikTok Downloader, Remove Background & Anime Search)"),
+                ("managesystem", "Setup, change, or remove a system channel"),
                 ("disableads", "Disable promotional messages in this server"),
+                ("nick", "Change the bot's nickname"),
+                ("setnick", "Change a user's nickname"),
+                ("slowmode", "Enable slowmode in a channel"),
+                ("remove_slowmode", "Disable slowmode in a channel"),
+                ("lock", "Restrict messages in a channel"),
+                ("unlock", "Allow messages in a channel"),
+                ("purge", "Bulk delete messages from a channel"),
+                ("timeout", "Temporarily mute a user"),
+                ("remove_timeout", "Remove timeout from a user"),
+                ("kick", "Kick a user with DM notification"),
+                ("ban", "Ban a user with DM notification"),
+                ("unban", "Unban a user"),
+                ("softban", "Softban (ban + unban to remove messages)"),
+                ("warn", "Warn a user"),
+                ("warns", "View warnings for a user"),
+                ("remove_warn", "Remove a warning from a user"),
+                ("category", "Create or delete a Category"),
+                ("role", "Add or remove a role from a user"),
+                ("roleall", "Add or remove a role from all users in the server"),
+                ("channel", "Create or delete a channel with advanced options")
             ]
         }
 
@@ -103,7 +148,7 @@ class HelpCog(commands.Cog):
             )
 
         embed.set_footer(
-            text="© Ryujin Bot (2023-2025) | Information System (0.6b)",
+            text="© Ryujin Bot (2023-2025) | Information System",
             icon_url=self.RYUJIN_LOGO
         )
         embed.set_author(

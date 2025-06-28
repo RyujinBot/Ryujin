@@ -55,7 +55,6 @@ class UnbanCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Check permissions
         if not interaction.user.guild_permissions.ban_members:
             await interaction.send(
                 "❌ You don't have permission to unban members.",
@@ -70,7 +69,6 @@ class UnbanCog(commands.Cog):
             )
             return
 
-        # Validate user ID
         try:
             user_id_to_unban = int(user_id)
         except ValueError:
@@ -80,7 +78,6 @@ class UnbanCog(commands.Cog):
             )
             return
 
-        # Check if user is actually banned
         try:
             ban_entry = await interaction.guild.fetch_ban(nextcord.Object(id=user_id_to_unban))
         except nextcord.NotFound:
@@ -96,14 +93,11 @@ class UnbanCog(commands.Cog):
             )
             return
 
-        # Prepare reason
         unban_reason = reason or "No reason provided"
 
         try:
-            # Unban the user
             await interaction.guild.unban(nextcord.Object(id=user_id_to_unban), reason=f"{interaction.user.name}: {unban_reason}")
             
-            # Try to get user info
             try:
                 user = await self.bot.fetch_user(user_id_to_unban)
                 user_mention = user.mention
@@ -112,7 +106,6 @@ class UnbanCog(commands.Cog):
                 user_mention = f"<@{user_id_to_unban}>"
                 user_name = f"Unknown User ({user_id_to_unban})"
             
-            # Create success embed
             description = f"**{user_mention}** has been unbanned from the server.\n\n"
             description += f"**User:** {user_mention} ({user_name})\n"
             description += f"**Unbanned by:** {interaction.user.mention} ({interaction.user.name})\n"

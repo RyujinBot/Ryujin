@@ -33,7 +33,6 @@ class ExtensionCog(commands.Cog):
 
         extension_files_dir = "resources/extensions"
         
-        # Load extension files data
         with open("config/extensions.json", "r") as json_file:
             extension_files = json.load(json_file)
         

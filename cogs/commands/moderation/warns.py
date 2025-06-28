@@ -52,7 +52,6 @@ class WarnsCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Check permissions
         if not interaction.user.guild_permissions.manage_messages:
             await interaction.send(
                 "❌ You don't have permission to use this command.",
@@ -61,14 +60,12 @@ class WarnsCog(commands.Cog):
             return
 
         try:
-            # Get user's warnings
             warnings = await get_user_warnings(
                 self.bot.connection,
                 interaction.guild.id,
                 user.id
             )
 
-            # Get total warning count
             total_warnings = await get_warning_count(
                 self.bot.connection,
                 interaction.guild.id,
@@ -76,7 +73,6 @@ class WarnsCog(commands.Cog):
             )
 
             if not warnings:
-                # No warnings
                 embed = nextcord.Embed(
                     title="📋 Warning History",
                     description=f"**User:** {user.mention} ({user.name})\n"
@@ -99,21 +95,17 @@ class WarnsCog(commands.Cog):
                 await interaction.send(embed=embed, ephemeral=True)
                 return
 
-            # Create warning list
             warning_list = []
             for warning in warnings:
                 warning_id, moderator_id, reason, warn_date = warning
                 
-                # Try to get moderator name
                 try:
                     moderator = await self.bot.fetch_user(moderator_id)
                     moderator_name = moderator.name
                 except:
                     moderator_name = f"Unknown User ({moderator_id})"
                 
-                # Format date
                 if isinstance(warn_date, str):
-                    # If it's already a string, try to parse it
                     try:
                         warn_date = datetime.fromisoformat(warn_date.replace('Z', '+00:00'))
                     except:
@@ -126,7 +118,6 @@ class WarnsCog(commands.Cog):
                 
                 warning_list.append(f"**#{warning_id}** | {moderator_name} | {date_str}\n└ {reason}")
 
-            # Set status based on warning count
             if total_warnings == 0:
                 status = "✅ Clean record"
             elif total_warnings == 1:
@@ -136,12 +127,10 @@ class WarnsCog(commands.Cog):
             else:
                 status = f"🚨 {total_warnings} warnings (High risk)"
 
-            # Create warnings text (limit to 10 most recent)
             warnings_text = "\n\n".join(warning_list[:10])
             if len(warning_list) > 10:
                 warnings_text += f"\n\n*... and {len(warning_list) - 10} more warnings*"
 
-            # Create embed
             embed = nextcord.Embed(
                 title="📋 Warning History",
                 description=f"**User:** {user.mention} ({user.name})\n"

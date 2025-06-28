@@ -33,7 +33,6 @@ class ProjectFileCog(commands.Cog):
 
         project_files_dir = "resources/project_files"
         
-        # Load project files data
         with open("config/project_files.json", "r") as json_file:
             project_files = json.load(json_file)
         

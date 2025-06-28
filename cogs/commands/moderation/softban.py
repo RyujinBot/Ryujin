@@ -52,7 +52,6 @@ class SoftbanCog(commands.Cog):
                 seconds = int(duration_str[:-1])
                 return timedelta(seconds=seconds)
             else:
-                # Default to hours if no unit specified
                 hours = int(duration_str)
                 return timedelta(hours=hours)
         except ValueError:
@@ -90,7 +89,6 @@ class SoftbanCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Check permissions
         if not interaction.user.guild_permissions.ban_members:
             await interaction.send(
                 "❌ You don't have permission to use this command.",
@@ -105,7 +103,6 @@ class SoftbanCog(commands.Cog):
             )
             return
 
-        # Check role hierarchy
         if user.top_role >= interaction.user.top_role:
             await interaction.send(
                 "❌ You can't use this command due to role hierarchy.",
@@ -120,17 +117,14 @@ class SoftbanCog(commands.Cog):
             )
             return
 
-        # Parse duration
         duration_delta = self.parse_duration(duration) if duration else None
         is_permanent = duration_delta is None
         
-        # Prepare reason
         softban_reason = reason or "No reason provided"
         if duration and not is_permanent:
             softban_reason += f" (Duration: {duration})"
 
         try:
-            # Send DM to user before softbanning (if possible)
             try:
                 dm_embed = nextcord.Embed(
                     title="🧹 You have been softbanned",
@@ -152,14 +146,11 @@ class SoftbanCog(commands.Cog):
             except:
                 dm_sent = False
 
-            # Softban the user (ban and immediately unban)
             ban_reason = f"SOFTBAN - {interaction.user.name}: {softban_reason}"
             await user.ban(reason=ban_reason)
             
-            # Immediately unban
             await interaction.guild.unban(user, reason=f"SOFTBAN COMPLETE - {interaction.user.name}: {softban_reason}")
             
-            # Create success embed
             description = f"**{user.mention}** has been softbanned from the server.\nAll their messages have been deleted and they have been kicked.\n\n"
             description += f"**User:** {user.mention} ({user.name})\n"
             description += f"**Softbanned by:** {interaction.user.mention} ({interaction.user.name})\n"

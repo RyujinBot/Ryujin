@@ -74,7 +74,6 @@ class AfkCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Set AFK status
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.afk_users[str(user_id)] = {
             "reason": reason,
@@ -108,7 +107,6 @@ class AfkCog(commands.Cog):
 
         user_id = str(message.author.id)
         
-        # Check if user is AFK and remove AFK status
         if user_id in self.afk_users:
             afk_data = self.afk_users[user_id]
             del self.afk_users[user_id]
@@ -130,7 +128,6 @@ class AfkCog(commands.Cog):
 
             await message.channel.send(embed=embed, delete_after=10)
 
-        # Check for mentions of AFK users
         for mention in message.mentions:
             mentioned_user_id = str(mention.id)
             if mentioned_user_id in self.afk_users:

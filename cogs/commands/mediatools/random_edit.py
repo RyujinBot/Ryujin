@@ -69,7 +69,6 @@ class AnotherButtonEdit(nextcord.ui.View):
             lines = f.read().strip().split("\n")
         new_link = random.choice(lines)
         await interaction.response.edit_message(content=new_link, view=self)
-        # Note: maybe_send_ad is not available in this context, so we'll skip it
 
 def setup(bot):
     bot.add_cog(RandomEditCog(bot)) 

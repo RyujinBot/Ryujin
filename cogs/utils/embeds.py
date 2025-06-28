@@ -1,6 +1,3 @@
-# utils/embeds.py
-# Funcții pentru generarea embed-urilor standardizate (info, ads, blacklist etc.) 
-
 import nextcord
 from datetime import datetime
 
@@ -100,7 +97,7 @@ def create_blacklist_embed(user_id, reason):
         description=f"**You can't use Ryujin's functions anymore because you have been blacklisted for `{reason}`.**",
         color=nextcord.Color.red()
     )
-    embed.set_footer(text="© Ryujin Bot (2023-2025) | Info System (0.6b)")
+    embed.set_footer(text="© Ryujin Bot (2023-2025) | Info System")
     embed.set_author(name="Ryujin", icon_url=RYUJIN_LOGO)
     return embed
 

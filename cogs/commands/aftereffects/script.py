@@ -33,7 +33,6 @@ class ScriptCog(commands.Cog):
 
         script_files_dir = "resources/scripts"
         
-        # Load script files data
         with open("config/scripts.json", "r") as json_file:
             script_files = json.load(json_file)
         

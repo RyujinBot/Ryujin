@@ -1,6 +1,3 @@
-# utils/config.py
-# Funcții pentru încărcare/salvare/configurare fișiere JSON/config 
-
 import json
 import os
 import configparser

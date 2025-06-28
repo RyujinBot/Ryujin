@@ -24,7 +24,8 @@ class ManageSystemCog(commands.Cog):
                 "TikTok Audio Downloader",
                 "YouTube Video Downloader",
                 "YouTube Audio Downloader",
-                "Instagram Downloader"
+                "Instagram Downloader",
+                "Ryujin AI"
             ],
             description="Choose which system to configure"
         ),
@@ -81,6 +82,12 @@ class ManageSystemCog(commands.Cog):
                 "title": "Instagram Downloader System",
                 "description": "**How to use?**\nSend a Instagram post link in this channel, and the bot should send the post as an attachment.\n\n**Easy, right? 😉**",
                 "image_url": "https://cdn.moongetsu.ro/Ryujin/InstagramDL/embed-image.png"
+            },
+            "Ryujin AI": {
+                "table": "ryujinai",
+                "title": "Ryujin AI System",
+                "description": "**How to use?**\nSend any message in this channel, and Ryujin AI will respond with helpful information, creative ideas, or answer your questions.\n\n**Powered by advanced AI technology! 🤖**",
+                "image_url": "https://cdn.moongetsu.ro/Ryujin/RyujinAI/embed-image.png"
             }
         }
 

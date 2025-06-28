@@ -1,6 +1,3 @@
-# utils/helpers.py
-# Funcții mici de ajutor pentru Ryujin 
-
 import os
 import random
 import asyncio

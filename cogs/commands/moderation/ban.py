@@ -52,7 +52,6 @@ class BanCog(commands.Cog):
                 seconds = int(duration_str[:-1])
                 return timedelta(seconds=seconds)
             else:
-                # Default to hours if no unit specified
                 hours = int(duration_str)
                 return timedelta(hours=hours)
         except ValueError:
@@ -90,7 +89,6 @@ class BanCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Check permissions
         if not interaction.user.guild_permissions.ban_members:
             await interaction.send(
                 "❌ You don't have permission to use this command.",
@@ -105,7 +103,6 @@ class BanCog(commands.Cog):
             )
             return
 
-        # Check role hierarchy
         if user.top_role >= interaction.user.top_role:
             await interaction.send(
                 "❌ You can't use this command due to role hierarchy.",
@@ -120,17 +117,14 @@ class BanCog(commands.Cog):
             )
             return
 
-        # Parse duration
         duration_delta = self.parse_duration(duration) if duration else None
         is_permanent = duration_delta is None
         
-        # Prepare reason
         ban_reason = reason or "No reason provided"
         if duration and not is_permanent:
             ban_reason += f" (Duration: {duration})"
 
         try:
-            # Send DM to user before banning (if possible)
             try:
                 dm_embed = nextcord.Embed(
                     title="🔨 You have been banned",
@@ -148,10 +142,8 @@ class BanCog(commands.Cog):
             except:
                 dm_sent = False
 
-            # Ban the user
             await user.ban(reason=f"{interaction.user.name}: {ban_reason}")
             
-            # Create success embed
             embed = nextcord.Embed(
                 title="🔨 User Banned",
                 description=f"**{user.mention}** has been banned from the server.\n\nUser: {user.mention} ({user.name})\nBanned by: {interaction.user.mention} ({interaction.user.name})\nReason: {ban_reason}\nDuration: {duration if not is_permanent and duration_delta else 'Permanent'}\n{f'Expires: <t:{int((datetime.now() + duration_delta).timestamp())}:R>' if not is_permanent and duration_delta else ''}\nDM Status: {'✅ DM sent to user' if dm_sent else '❌ Could not send DM (DMs closed)'}",

@@ -1,10 +1,6 @@
-# utils/db.py
-# Funcții pentru conexiune la baza de date și operațiuni DB 
-
 import mysql.connector
 from mysql.connector import Error
 
-# Database connection and table schemas
 TABLE_SCHEMAS = {
     'blacklist': """
         CREATE TABLE IF NOT EXISTS blacklist (
@@ -111,6 +107,12 @@ TABLE_SCHEMAS = {
             server_id VARCHAR(255) PRIMARY KEY,
             channel_id VARCHAR(255)
         )
+    """,
+    'ryujinai': """
+        CREATE TABLE IF NOT EXISTS ryujinai (
+            server_id VARCHAR(255) PRIMARY KEY,
+            channel_id VARCHAR(255)
+        )
     """
 }
 
@@ -160,6 +162,22 @@ async def add_to_blacklist(connection, user_id, reason):
     except Error as e:
         print(f"Error: {e}")
 
+async def remove_from_blacklist(connection, user_id):
+    """Remove a user from the blacklist"""
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "DELETE FROM blacklist WHERE user_id = %s",
+            (user_id,)
+        )
+        deleted = cursor.rowcount > 0
+        connection.commit()
+        cursor.close()
+        return deleted
+    except Error as e:
+        print(f"Error removing from blacklist: {e}")
+        return False
+
 def get_blacklist(connection):
     """Get all blacklisted users"""
     try:
@@ -172,7 +190,6 @@ def get_blacklist(connection):
         print(f"Error: {e}")
         return {}
 
-# Warning system functions
 async def add_warning(connection, server_id, user_id, moderator_id, reason):
     """Add a warning to a user"""
     try:

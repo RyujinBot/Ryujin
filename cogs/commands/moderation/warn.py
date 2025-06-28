@@ -56,7 +56,6 @@ class WarnCog(commands.Cog):
             await interaction.send(embed=embed, ephemeral=True)
             return
 
-        # Check permissions
         if not interaction.user.guild_permissions.manage_messages:
             await interaction.send(
                 "❌ You don't have permission to use this command.",
@@ -64,7 +63,6 @@ class WarnCog(commands.Cog):
             )
             return
 
-        # Check role hierarchy
         if user.top_role >= interaction.user.top_role:
             await interaction.send(
                 "❌ You can't use this command due to role hierarchy.",
@@ -72,7 +70,6 @@ class WarnCog(commands.Cog):
             )
             return
 
-        # Can't warn yourself
         if user.id == interaction.user.id:
             await interaction.send(
                 "❌ You can't warn yourself.",
@@ -80,7 +77,6 @@ class WarnCog(commands.Cog):
             )
             return
 
-        # Can't warn the bot
         if user.id == self.bot.user.id:
             await interaction.send(
                 "❌ You can't warn the bot.",
@@ -89,7 +85,6 @@ class WarnCog(commands.Cog):
             return
 
         try:
-            # Add warning to database
             warning_id = await add_warning(
                 self.bot.connection,
                 interaction.guild.id,
@@ -105,14 +100,12 @@ class WarnCog(commands.Cog):
                 )
                 return
 
-            # Get total warning count
             total_warnings = await get_warning_count(
                 self.bot.connection,
                 interaction.guild.id,
                 user.id
             )
 
-            # Send DM to user (if possible)
             try:
                 dm_embed = nextcord.Embed(
                     title="⚠️ You have been warned",
@@ -134,7 +127,6 @@ class WarnCog(commands.Cog):
             except:
                 dm_sent = False
 
-            # Create success embed
             embed = nextcord.Embed(
                 title="⚠️ User Warned",
                 description=f"**{user.mention}** has been warned.\n\n"

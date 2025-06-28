@@ -25,7 +25,7 @@ import time
 import psutil
 import logging
 import aiohttp
-# import discord
+import discord
 from pytube import YouTube
 from pytube.innertube import _default_clients
 from nextcord import SlashOption
@@ -41,8 +41,8 @@ import subprocess
 # import imageio
 import numpy as np
 import traceback
+from groq import Groq
 
-# Import utils modules
 from cogs.utils.db import initialize_database, get_blacklist, add_to_blacklist, get_removebg_channels
 from cogs.utils.embeds import create_info_embed, create_ads_embed, create_blacklist_embed, create_servers_embed, SupportButtons
 from cogs.utils.config import load_bot_config, load_removebg_config, load_messages_config, save_messages_config, count_presets_in_categories
@@ -54,7 +54,6 @@ logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctim
 
 RYUJIN_LOGO = "https://cdn.discordapp.com/avatars/1059400568805785620/63a77f852ea29f37961f458c53fb5a97.png"
 
-# Initialize database and get blacklist
 connection = initialize_database()
 blacklist = {}
 if connection:
@@ -62,27 +61,26 @@ if connection:
 else:
     print("Warning: Database connection failed. Bot will run without database features.")
 
-# Load bot configuration
 bot_config = load_bot_config()
 TOKEN = bot_config['token']
 STATS_CHANNEL = bot_config['stats_channel']
 INFO_CHANNEL = bot_config['info_channel']
 WELCOME_LEAVE_CHANNEL = bot_config['welcome_leave_channel']
 
-# Load other configurations
 api_keys = load_removebg_config()
 PREFIX = "+"
+
+os.environ["GROQ_API_KEY"] = "censored"
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 intents = nextcord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Add bot attributes that cogs need
 bot.blacklist = blacklist
 bot.connection = connection
 bot.RYUJIN_LOGO = RYUJIN_LOGO
 
-# Make maybe_send_ad available as a bot method
 async def maybe_send_ad(interaction: nextcord.Interaction):
     """Sends an ad with 20% probability if ads are not disabled"""
     if not connection:
@@ -119,6 +117,9 @@ async def maybe_send_ad(interaction: nextcord.Interaction):
         },
         "Font Search": {
             "table": "fontsearch"
+        },
+        "Ryujin AI": {
+            "table": "ryujinai"
         }
     }
     for system in SYSTEM_CONFIG:
@@ -148,12 +149,10 @@ async def on_ready():
     print(f"{'RYUJIN BOT STARTUP':^100}")
     print("═"*100 + "\n")
 
-    # Load cogs first
     print("Loading cogs...")
     await load_cogs()
     print("Cogs loaded successfully!\n")
 
-    # Define paths to avoid f-string backslash issues
     overlays_path = "resources/overlays"
     sfx_path = "resources/sfx"
     edit_audio_path = "resources/edit audios"
@@ -181,12 +180,10 @@ async def on_ready():
         for item in items:
             logging.info(item)
 
-    # Start background tasks
     bot.loop.create_task(change_status())
     bot.loop.create_task(update_info_message())
     bot.loop.create_task(update_servers_message())
     
-    # Sync slash commands
     print("🔄 Syncing slash commands with Discord...")
     try:
         await bot.sync_all_application_commands()
@@ -269,6 +266,9 @@ async def on_message(message):
             },
             "Font Search": {
                 "table": "fontsearch"
+            },
+            "Ryujin AI": {
+                "table": "ryujinai"
             }
         }
 
@@ -397,7 +397,7 @@ async def on_message(message):
                     description=f"**You can't use Ryujin's functions anymore because you have been blacklisted for `{blacklist[user_id]}`.**",
                     color=nextcord.Color.red()
                 )
-                embed.set_footer(text="© Ryujin Bot (2023-2025) | Info System (0.6b)")
+                embed.set_footer(text="© Ryujin Bot (2023-2025) | Info System")
                 embed.set_author(
                     name="Ryujin",
                     icon_url="https://images-ext-2.discordapp.net/external/LEy12yVHJziqiqnjHzdlmAGVx-rL7xsKzu3A57CfV3M/%3Fsize%3D1024/https/cdn.discordapp.com/avatars/1059400568805785620/63a77f852ea29f37961f458c53fb5a97.png?width=676&height=676"
@@ -570,6 +570,360 @@ async def on_message(message):
                         print(f"Error in anime search: {e}")
                         await message.channel.send(embed=error_embed)
 
+        if "songsearch" in channel_configs and message.channel.id == channel_configs["songsearch"]:
+            try:
+                url = None
+                if message.content.startswith(("https://www.youtube.com/", "https://youtu.be/", "https://youtube.com/shorts/")):
+                    clean_url = extract_video_id_from_url(message.content)
+                    if clean_url != message.content:
+                        logging.info(f"Cleaned playlist URL for song search: {message.content} -> {clean_url}")
+                    
+                    ydl_opts = {
+                        'format': 'bestaudio/best',
+                        'outtmpl': 'temp/%(title)s.%(ext)s',
+                        'postprocessors': [{
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '192',
+                        }],
+                        'noplaylist': True,
+                        'extract_flat': False,
+                    }
+                    url = clean_url
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(url, download=True)
+                        file_path = ydl.prepare_filename(info).replace(".webm", ".mp3").replace(".m4a", ".mp3")
+
+                elif message.content.startswith(("https://www.tiktok.com/", "https://vm.tiktok.com/", "https://vt.tiktok.com/")):
+                    video_objects = snaptik(message.content)
+                    if video_objects:
+                        unique_id = str(uuid.uuid4())[:8]
+                        file_path = f"temp/tiktok_{unique_id}.mp3"
+                        
+                        temp_video = f"temp/tiktok_{unique_id}.mp4"
+                        video_objects[0].download(temp_video)
+                        
+                        subprocess.run(['ffmpeg', '-i', temp_video, '-q:a', '0', '-map', 'a', file_path])
+                        os.remove(temp_video)
+                    else:
+                        await message.channel.send("**❌ Could not download TikTok audio!**")
+                        return
+
+                elif message.attachments:
+                    audio_attachment = None
+                    for attachment in message.attachments:
+                        if attachment.filename.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.mp4', '.webm')):
+                            audio_attachment = attachment
+                            break
+                    
+                    if not audio_attachment:
+                        await message.delete()
+                        warning = await message.channel.send("**❌ This channel is only for identifying songs. Please upload an audio file or share a video link!**")
+                        await asyncio.sleep(5)
+                        await warning.delete()
+                        return
+
+                    file_path = f"temp/{audio_attachment.filename}"
+                    await audio_attachment.save(file_path)
+                
+                else:
+                    await message.delete()
+                    warning = await message.channel.send("**❌ Please upload an audio file or share a supported video link (YouTube or TikTok)!**")
+                    await asyncio.sleep(5)
+                    await warning.delete()
+                    return
+
+                try:
+                    shazam = Shazam()
+                    result = await shazam.recognize(file_path)
+
+                    if not result or 'track' not in result:
+                        error_embed = nextcord.Embed(
+                            title="❌ No Match Found",
+                            description="Sorry, I couldn't identify any song from this file.",
+                            color=0xed4245
+                        )
+                        error_embed.set_footer(
+                            text="© Ryujin Bot (2023-2025) | Song Finder System",
+                            icon_url=RYUJIN_LOGO
+                        )
+                        error_embed.set_author(
+                            name="Ryujin",
+                            icon_url=RYUJIN_LOGO
+                        )
+                        await message.channel.send(embed=error_embed)
+                        return
+
+                    track = result['track']
+                    
+                    embed = nextcord.Embed(
+                        title="🎵 Song Found!",
+                        description=f"Here's what I found about this video/audio/link:",
+                        color=0x2a2a2a
+                    )
+
+                    embed.add_field(
+                        name="Title",
+                        value=f"```{track.get('title', 'Unknown')}```",
+                        inline=True
+                    )
+                    embed.add_field(
+                        name="Artist", 
+                        value=f"```{track.get('subtitle', 'Unknown Artist')}```",
+                        inline=True
+                    )
+
+                    if 'genres' in track:
+                        embed.add_field(
+                            name="Genre",
+                            value=f"```{track['genres'].get('primary', 'Unknown')}```",
+                            inline=True
+                        )
+
+                    links = []
+                    if 'share' in track:
+                        if 'spotify' in track['share']:
+                            links.append(f"```[Spotify]({track['share']['spotify']})```")
+                        if 'apple_music' in track['share']:
+                            links.append(f"```[Apple Music]({track['share']['apple_music']})```")
+                        if 'youtube' in track['share']:
+                            links.append(f"```[YouTube]({track['share']['youtube']})```")
+
+                    if links:
+                        embed.add_field(
+                            name="Listen On",
+                            value=" • ".join(links),
+                            inline=False
+                        )
+
+                    if 'images' in track and 'coverart' in track['images']:
+                        embed.set_image(url=track['images']['coverart'])
+
+                    embed.add_field(
+                        name="📝 Note",
+                        value="```Please note that this song identification system may not always be 100% accurate. Results are based on audio matching algorithms and may occasionally provide incorrect matches.```",
+                        inline=False
+                    )
+                    
+                    embed.set_footer(
+                        text="© Ryujin Bot (2023-2025) | Song Finder System",
+                        icon_url=RYUJIN_LOGO
+                    )
+                    embed.set_author(
+                        name="Ryujin",
+                        icon_url=RYUJIN_LOGO
+                    )
+
+                    await message.channel.send(embed=embed)
+
+                finally:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+
+            except Exception as e:
+                error_embed = nextcord.Embed(
+                    title="❌ Error",
+                    description=f"An error occurred while processing your request: {str(e)}",
+                    color=0xff0000
+                )
+                embed.set_footer(
+                    text="© Ryujin Bot (2023-2025) | Song Finder System",
+                    icon_url=RYUJIN_LOGO
+                )
+                embed.set_author(
+                    name="Ryujin",
+                    icon_url=RYUJIN_LOGO
+                )
+                await message.channel.send(embed=error_embed)
+
+        if "fontsearch" in channel_configs and message.channel.id == channel_configs["fontsearch"]:
+            try:
+                if not message.attachments:
+                    await message.delete()
+                    warning = await message.channel.send("**❌ This channel is only for identifying fonts. Please upload an image!**")
+                    await asyncio.sleep(5)
+                    await warning.delete()
+                    return
+
+                attachment = message.attachments[0]
+                
+                if not attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    await message.delete()
+                    warning = await message.channel.send("**❌ Please upload a valid image file (PNG, JPG, JPEG)!**")
+                    await asyncio.sleep(5)
+                    await warning.delete()
+                    return
+
+                image_data = await attachment.read()
+                
+                url = "https://api.whatfontis.com/v2/fonts"
+                headers = {
+                    "Authorization": "Bearer YOUR_API_KEY"
+                }
+                files = {
+                    "file": ("image.jpg", image_data, "image/jpeg")
+                }
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, headers=headers, data=files) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            
+                            embed = nextcord.Embed(
+                                title="🔍 Font Search Results",
+                                description="Here are the closest matching fonts I found:",
+                                color=0x2b2d31
+                            )
+
+                            for i, font in enumerate(data['fonts'][:5], 1):
+                                embed.add_field(
+                                    name=f"Match #{i}: {font['name']}",
+                                    value=f"Family: {font['family']}\nFoundry: {font['foundry']}\nLicense: {font['license']}",
+                                    inline=False
+                                )
+
+                            embed.add_field(
+                                name="📝 Note",
+                                value="```Please note that font identification may not always be 100% accurate. Results are based on image matching algorithms and may occasionally provide incorrect matches.```",
+                                inline=False
+                            )
+
+                            embed.set_image(url=attachment.url)
+                            
+                            embed.set_footer(
+                                text="© Ryujin Bot (2023-2025) | Font Search System",
+                                icon_url=RYUJIN_LOGO
+                            )
+
+                            embed.set_author(
+                                name="Ryujin",
+                                icon_url=RYUJIN_LOGO
+                            )
+
+                            await message.reply(embed=embed)
+                        else:
+                            raise Exception(f"API returned status {response.status}")
+
+            except Exception as e:
+                error_embed = nextcord.Embed(
+                    title="❌ Error",
+                    description="Sorry, there was an error processing your request. Please try again later.",
+                    color=0xff0000
+                )
+                error_embed.set_footer(
+                    text="© Ryujin Bot (2023-2025) | Font Search System",
+                    icon_url=RYUJIN_LOGO
+                )
+                await message.channel.send(embed=error_embed)
+            
+        if "ryujinai" in channel_configs and message.channel.id == channel_configs["ryujinai"]:
+            user_id = message.author.id
+            if user_id in blacklist:
+                embed = nextcord.Embed(
+                    title="You are blacklisted!",
+                    description=f"**You can't use Ryujin's functions anymore because you have been blacklisted for `{blacklist[user_id]}`.**",
+                    color=nextcord.Color.red()
+                )
+                embed.set_footer(text="© Ryujin Bot (2023-2025) | Blacklist System")
+                embed.set_author(
+                    name="Ryujin",
+                    icon_url=RYUJIN_LOGO
+                )
+                blacklist_msg = await message.channel.send(embed=embed)
+                await asyncio.sleep(10)
+                await blacklist_msg.delete()
+                logging.warning(f"{message.author} is blacklisted. Unable to process AI request.")
+                return
+
+            if not message.content.strip():
+                return
+
+            async with message.channel.typing():
+                try:
+                    chat_completion = await asyncio.to_thread(
+                        groq_client.chat.completions.create,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are Ryujin AI, an expert assistant for the AMV (Anime Music Video) and creative editing community. You have deep knowledge of all Ryujin's features including: media tools (overlays, edit audios, SFX, compression, resizing), After Effects resources (presets, project files, scripts, extensions), social features (trending, hashtag generation), and media processing (nightcore, sped up, slowed effects, format conversion, audio cutting). You are also an expert in editing software like After Effects, Premiere Pro, Vegas Pro, DaVinci Resolve, Filmora, and other popular editing tools. You provide: 1) Creative ideas and inspiration for AMV editing, 2) Technical advice about video editing software and techniques, 3) Help with using Ryujin's features and commands, 4) Problem-solving and troubleshooting for editing issues, 5) Fun conversations about anime, music and editing. Keep responses engaging, friendly and helpful. Use emojis occasionally to make responses more lively. Always maintain a positive and supportive tone like a best friend who's passionate about editing."
+                            },
+                            {
+                                "role": "user",
+                                "content": message.content
+                            }
+                        ],
+                        model="llama-3.3-70b-versatile",
+                    )
+                    
+                    ai_response = chat_completion.choices[0].message.content
+                    
+                    if len(ai_response) <= 2000:
+                        await message.reply(f"{ai_response}")
+                    else:
+                        chunks = split_long_text(ai_response)
+                        
+                        if len(chunks) > 5:
+                            embed = nextcord.Embed(
+                                title="🤖 Ryujin AI Response",
+                                description=chunks[0][:4096],
+                                color=0x2a2a2a
+                            )
+                            embed.set_footer(
+                                text=f"© Ryujin Bot (2023-2025) | AI System | Page 1/{len(chunks)}",
+                                icon_url=RYUJIN_LOGO
+                            )
+                            embed.set_author(
+                                name="Ryujin AI",
+                                icon_url=RYUJIN_LOGO
+                            )
+                            embed.add_field(
+                                name="👤 Asked by",
+                                value=f"{message.author.mention} ({message.author.name})",
+                                inline=False
+                            )
+                            
+                            await message.reply(embed=embed)
+                            
+                            for i, chunk in enumerate(chunks[1:], 1):
+                                embed = nextcord.Embed(
+                                    title=f"🤖 Ryujin AI Response (Continued)",
+                                    description=chunk[:4096],
+                                    color=0x2a2a2a
+                                )
+                                embed.set_footer(
+                                    text=f"© Ryujin Bot (2023-2025) | AI System | Page {i+1}/{len(chunks)}",
+                                    icon_url=RYUJIN_LOGO
+                                )
+                                embed.set_author(
+                                    name="Ryujin AI",
+                                    icon_url=RYUJIN_LOGO
+                                )
+                                await message.channel.send(embed=embed)
+                        else:
+                            await message.reply(f"{chunks[0]}")
+                            
+                            for i, chunk in enumerate(chunks[1:], 1):
+                                await message.channel.send(f"**Next {i+1}/{len(chunks)}:**\n{chunk}")
+                    
+                    logging.info(f"AI response sent to {message.author} in '{message.guild}'")
+                    
+                except Exception as e:
+                    error_embed = nextcord.Embed(
+                        title="❌ AI Error",
+                        description=f"Sorry, I encountered an error while processing your request: `{str(e)}`\n\nPlease try again in a moment!",
+                        color=0xff0000
+                    )
+                    error_embed.set_footer(
+                        text="© Ryujin Bot (2023-2025) | AI System",
+                        icon_url=RYUJIN_LOGO
+                    )
+                    error_embed.set_author(
+                        name="Ryujin AI",
+                        icon_url=RYUJIN_LOGO
+                    )
+                    await message.channel.send(embed=error_embed)
+                    logging.error(f"AI error for {message.author}: {e}")
+
     except Exception as e:
         logging.exception(f"An error occurred: {e}")
         print(f"An error occurred: {e}")
@@ -578,6 +932,10 @@ async def on_message(message):
         try:
             url = None
             if message.content.startswith(("https://www.youtube.com/", "https://youtu.be/", "https://youtube.com/shorts/")):
+                clean_url = extract_video_id_from_url(message.content)
+                if clean_url != message.content:
+                    logging.info(f"Cleaned playlist URL for song search: {message.content} -> {clean_url}")
+                
                 ydl_opts = {
                     'format': 'bestaudio/best',
                     'outtmpl': 'temp/%(title)s.%(ext)s',
@@ -586,8 +944,10 @@ async def on_message(message):
                         'preferredcodec': 'mp3',
                         'preferredquality': '192',
                     }],
+                    'noplaylist': True,
+                    'extract_flat': False,
                 }
-                url = message.content
+                url = clean_url
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=True)
                     file_path = ydl.prepare_filename(info).replace(".webm", ".mp3").replace(".m4a", ".mp3")
@@ -814,6 +1174,59 @@ async def on_message(message):
             )
             await message.channel.send(embed=error_embed)
         
+def split_long_text(text, max_length=1900):
+    """Split long text into chunks while preserving sentence boundaries"""
+    if len(text) <= max_length:
+        return [text]
+    
+    chunks = []
+    current_chunk = ""
+    
+    sentences = text.split('. ')
+    
+    for sentence in sentences:
+        sentence_with_period = sentence + '. '
+        
+        if len(current_chunk + sentence_with_period) <= max_length:
+            current_chunk += sentence_with_period
+        else:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+            
+            if len(sentence_with_period) > max_length:
+                words = sentence_with_period.split()
+                temp_chunk = ""
+                
+                for word in words:
+                    if len(temp_chunk + word + " ") <= max_length:
+                        temp_chunk += word + " "
+                    else:
+                        if temp_chunk:
+                            chunks.append(temp_chunk.strip())
+                        temp_chunk = word + " "
+                
+                if temp_chunk:
+                    current_chunk = temp_chunk
+            else:
+                current_chunk = sentence_with_period
+    
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+    
+    return chunks
+
+def extract_video_id_from_url(url):
+    """Extract the main video ID from YouTube URLs, handling playlist links"""
+    import re
+    
+    if '&list=' in url or '&start_radio=' in url:
+        video_id_match = re.search(r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]+)', url)
+        if video_id_match:
+            video_id = video_id_match.group(1)
+            return f"https://www.youtube.com/watch?v={video_id}"
+    
+    return url
+
 async def download_tiktok_video(tiktok_url, server_id, configured_channel_id, message):
     try:
         if message.channel.id != configured_channel_id:
@@ -1012,46 +1425,103 @@ async def download_youtube_audio(url, server_id, configured_channel_id, message)
         if message.channel.id != configured_channel_id:
             return None
 
+        clean_url = extract_video_id_from_url(url)
+        if clean_url != url:
+            logging.info(f"Cleaned playlist URL: {url} -> {clean_url}")
+
         start_time = time.time()
-        logging.info(f"The bot is downloading audio from {url}")
+        logging.info(f"The bot is downloading audio from {clean_url}")
 
         ydl_opts = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio/best[ext=m4a]/best[ext=mp3]/best',
             'outtmpl': 'temp/%(title)s.%(ext)s',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
+            'postprocessors': [],
+            'socket_timeout': 20,
+            'retries': 2,
+            'fragment_retries': 2,
+            'file_access_retries': 2,
+            'extractor_retries': 2,
+            'http_chunk_size': 20971520,
+            'buffersize': 16384,
+            'concurrent_fragment_downloads': 16,
+            'max_sleep_interval': 0.5,
+            'quiet': True,
+            'no_warnings': True,
+            'progress_hooks': [],
+            'ignoreerrors': False,
+            'no_check_certificate': True,
+            'prefer_insecure': True,
+            'noplaylist': True,
+            'extract_flat': False,
+            'writethumbnail': False,
+            'writesubtitles': False,
+            'writeautomaticsub': False,
+            'writedescription': False,
+            'writeinfojson': False,
+            'writeannotations': False,
+            'writecomments': False,
+            'writeplaylistmetafiles': False,
         }
 
         os.makedirs('temp', exist_ok=True)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=True)
-            download_path_audio_mp3 = ydl.prepare_filename(info_dict).replace(".webm", ".mp3").replace(".m4a", ".mp3")
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(clean_url, download=False)
+                
+                if info_dict.get('duration', 0) > 1800:
+                    await message.channel.send("**❌ Audio is too long (max 30 minutes). Please try a shorter video.**")
+                    return None
+                
+                ydl.download([clean_url])
+                download_path_audio = ydl.prepare_filename(info_dict)
+                
+                if not os.path.exists(download_path_audio):
+                    raise FileNotFoundError("Could not find downloaded audio file")
+                
+        except Exception as e:
+            logging.warning(f"First attempt failed: {e}, trying worst quality...")
+            ydl_opts['format'] = 'worstaudio/worst'
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([clean_url])
+                download_path_audio = ydl.prepare_filename(info_dict)
+                
+                if not os.path.exists(download_path_audio):
+                    raise FileNotFoundError("Could not find downloaded audio file")
 
         end_time = time.time()
         duration = end_time - start_time
 
-        if not os.path.exists(download_path_audio_mp3):
-            logging.error(f"Expected file {download_path_audio_mp3} does not exist.")
-            raise FileNotFoundError(f"Expected file {download_path_audio_mp3} does not exist.")
+        file_size = os.path.getsize(download_path_audio)
+        if file_size == 0:
+            raise Exception("Downloaded file is empty")
 
-        logging.info(f"The bot has downloaded the audio in {duration:.2f} seconds. Path: {download_path_audio_mp3}")
-        print(f"Audio downloaded in {duration:.2f} seconds.")
+        logging.info(f"The bot has downloaded the audio in {duration:.2f} seconds. Path: {download_path_audio}, Size: {file_size} bytes")
+        print(f"Audio downloaded in {duration:.2f} seconds. Size: {file_size} bytes")
 
-        with open(download_path_audio_mp3, 'rb') as audio_file:
-            await message.channel.send(file=File(audio_file, filename=os.path.basename(download_path_audio_mp3)))
+        try:
+            with open(download_path_audio, 'rb') as audio_file:
+                await message.channel.send(
+                    f"**Your audio has been downloaded in `{duration:.2f}` seconds. 🎵**", 
+                    file=File(audio_file, filename=os.path.basename(download_path_audio))
+                )
+        except Exception as send_error:
+            logging.error(f"Error sending file: {send_error}")
+            await message.channel.send(f"**❌ Downloaded successfully but failed to send: `{send_error}`**")
+        finally:
+            try:
+                os.remove(download_path_audio)
+                logging.info(f"Cleaned up: {download_path_audio}")
+            except Exception as cleanup_error:
+                logging.warning(f"Failed to clean up {download_path_audio}: {cleanup_error}")
 
-        os.remove(download_path_audio_mp3)
-
-        return download_path_audio_mp3
+        return download_path_audio
 
     except Exception as e:
-        error_message = f"**Sorry, I can't download the audio from the video that you just sent... 🥺 (Error: `{e}`)**"
-        logging.error(error_message)
-        print(error_message)
+        error_message = f"**Sorry, I can't download the audio from the video that you just sent... 🥺**\n\n**Error:** `{str(e)}`\n\n**Possible solutions:**\n• Try a different video\n• Check if the video is available\n• Try again in a few minutes"
+        logging.error(f"Audio download error: {e}")
+        print(f"Audio download error: {e}")
         await message.channel.send(error_message)
         return None
 
@@ -1141,7 +1611,6 @@ async def update_servers_message():
             print(f"Error in servers message update loop: {e}")
             await asyncio.sleep(60)
 
-# Load cogs
 async def load_cogs():
     """Load all cogs from the cogs directory"""
     print("🔍 Starting cog loading process...")
